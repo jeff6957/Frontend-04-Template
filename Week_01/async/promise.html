@@ -46,16 +46,17 @@
       })
     }
 
+    
+
     function go() {
-      setTimeout(function() {
+      setLight('green');
+      sleep(1000).then(() => {
         setLight('yellow');
-        setTimeout(function() {
-          setLight('red');
-          setTimeout(function() {
-            go();
-          }, 500)
-        }, 200)
-      }, 1000)
+        return sleep(200)
+      }).then((res) => {
+        setLight('red');
+        return sleep(500)
+      }).then(go)
     }
 
 
