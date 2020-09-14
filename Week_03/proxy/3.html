@@ -1,0 +1,83 @@
+<script>
+
+
+  let callbacks = new Map(); // 存储回调函数
+  
+  let usedReactivties = [];
+
+  let object = {
+    a: 1,
+    b: 2,
+  }
+
+
+  let po = reactive(object);
+
+
+  effect(() => {
+    console.log('callback:',po.a)
+  })
+
+
+  function effect(callback) {
+    // callbacks.push(callback)
+    usedReactivties = []; // 清空
+
+    callback(); // 如果真的引到了 reactive 对象， 就一定会在 get 里发生一个注册的行为
+
+    console.log(usedReactivties)
+
+    // 遍历整个 usedReactivties
+    for(let reactivity of usedReactivties) {
+      // 有可能发生多次注册
+      // 判断是否存在 [obj, prop] reactivity[0] == obj
+      if(!callbacks.has(reactivity[0])){
+        // 不存在就存一个空map
+        callbacks.set(reactivity[0], new Map())
+      }
+
+      //reactivity == [obj, prop]
+      // 判断 prop 是否存在于 obj 内
+      if(!callbacks.get(reactivity[0]).has(reactivity[1])){
+        // 没有就存一个空的 给 obj
+        // !!整个数组是存回调函数的
+        callbacks.get(reactivity[0]).set(reactivity[1], [])
+      }
+
+      callbacks.get(reactivity[0]).get(reactivity[1]).push(callback)
+    }
+
+  }
+
+  function reactive(object) {
+
+    return new Proxy(object, {
+      set(obj, prop, value){
+        console.log(obj, prop, value)
+
+        obj[prop] = value; // 这里可以使用 Reflect对象
+
+        // 调用回调
+        if(callbacks.get(obj)) {
+          if(callbacks.get(obj).get(prop)) {
+            for(let callback of callbacks.get(obj).get(prop)){
+              callback();
+            }
+          }
+        }
+        return obj[prop];
+      },
+      get(obj, prop){
+        console.log(obj, prop)
+        // 注册
+        usedReactivties.push([obj, prop]);
+
+
+        return obj[prop];
+      }
+    })
+
+  }
+
+
+</script>

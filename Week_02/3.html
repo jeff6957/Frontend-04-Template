@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <style>
+    .cell{
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background-color: gray;
+      border-bottom: 1px solid #fff;
+      border-right: 1px solid #fff;
+      vertical-align: middle;
+      
+    }
+    #container{
+      width: 701px;
+      line-height: 0;
+    }
+  </style>
+  <div id="container"></div>
+  <button onclick="localStorage['map'] = JSON.stringify(map)">save</button>
+  <script>
+    let map = localStorage['map'] ? JSON.parse(localStorage['map']) : Array(10000).fill(0);
+    console.log(map)
+    let container = document.getElementById('container');
+    // x y 坐标点位置
+    for(let x = 0; x < 100; x++){
+      for(let y = 0; y < 100; y++) {
+        let cell = document.createElement('div');
+        cell.classList.add('cell');
+
+        // 当前位置
+        if(map[x * 100 + y] == 1) {
+          cell.style.backgroundColor = 'black';
+        }
+        // 添加事件
+        cell.addEventListener('mousemove', () => {
+          if (mousedown) {
+            console.log(x, y)
+            if(clear) {
+              cell.style.backgroundColor = '';
+              map[x * 100 + y] = 0;
+            } else {
+              cell.style.backgroundColor = 'black';
+              map[x * 100 + y] = 1;
+            }
+          }
+        })
+
+        container.appendChild(cell)
+      }
+    }
+
+
+    let mousedown = false;
+    let clear = false;
+
+    // 注意这里是给 整个dom 添加的事件
+    document.addEventListener("mousedown", e => {
+      mousedown = true;
+      clear = (e.which === 3); // 右键
+    })
+
+    document.addEventListener("mouseup", () => mousedown = false)
+
+    document.addEventListener('contextmenu', e => e.preventDefault());
+
+
+    // 备用
+    function getPoint(x, y) {
+      return x * 100 + y
+    }
+
+    function sleep(time) {
+      return new Promise(function(resolve, reject){
+        setTimeout(resolve, time)
+      })
+    }
+
+    // 目前只是找一下，是否能走过去
+    async function path(map, start, end) {
+      //
+
+      var queue = [start]; // 栈 || 堆 stack
+
+      async function insert(x, y) {
+
+        // 处理边界
+        if (x < 0 || x >= 100 || y < 0 || y >= 100) {
+          return;
+        }
+
+        // 如果为真 代表有值，墙 || 走过了
+        if(map[x * 100 + y])
+          return;
+
+        await sleep(30);
+        container.children[x * 100 + y].style.backgroundColor = 'lightgreen'; // 改个验收
+        map[x * 100 + y] = 2;
+        queue.push([x, y]);
+      }
+
+      while(queue.length) {
+        let [x, y] = queue.shift(); // 取出一个
+
+        // 到达终点了
+        if (x === end[0] && y === end[1]) {
+          console.log('queue',queue)
+          return true;
+        }
+        // 查询当前点 上下左右可以走点点
+        // 然后加入队列内
+        await insert(x - 1, y); // 上
+        await insert(x, y - 1); // 左
+        await insert(x + 1, y); // 下
+        await insert(x, y + 1); // 右
+      }
+    }
+  </script>
+</body>
+</html>

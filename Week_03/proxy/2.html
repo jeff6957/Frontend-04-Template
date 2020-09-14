@@ -1,0 +1,45 @@
+<script>
+
+  let object = {
+    a: 1,
+    b: 2,
+  }
+
+  let callbacks = []; // 存储回调函数
+
+  let po = reactive(object);
+
+
+  effect(() => {
+    console.log('callback:',po.a)
+  })
+
+
+  function effect(callback) {
+    callbacks.push(callback)
+  }
+
+  function reactive(object) {
+
+    return new Proxy(object, {
+      set(obj, prop, value){
+        console.log(obj, prop, value)
+
+        obj[prop] = value; // 这里可以使用 Reflect对象
+
+        // 调用 所有回调
+        for(let callback of callbacks){
+          callback();
+        }
+        return obj[prop];
+      },
+      get(obj, prop){
+        console.log(obj, prop)
+        return obj[prop];
+      }
+    })
+
+  }
+
+
+</script>
